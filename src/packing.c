@@ -232,7 +232,7 @@ int unpack_public_key(
 }
 
 
-int pack_secret_key(
+int pack_secret_key_CCA(
     unsigned char   *blob,
     const PARAM_SET *param,
     const uint16_t  *F,
@@ -241,14 +241,23 @@ int pack_secret_key(
 
     blob[0] = (char) param->id;
     tri_to_string(param->N, F, blob+1);
-    if (param->id==NTRU_CCA_443 || param->id == NTRU_CCA_743)
-    {
-        pack_public_key (blob+1+param->packsk, param, h);
-    }
+    pack_public_key (blob+1+param->packsk, param, h);
     return 0;
 }
 
-int unpack_secret_key(
+int pack_secret_key_KEM(
+    unsigned char   *blob,
+    const PARAM_SET *param,
+    const uint16_t  *F)
+{
+
+    blob[0] = (char) param->id;
+    tri_to_string(param->N, F, blob+1);
+
+    return 0;
+}
+
+int unpack_secret_key_CCA(
     const unsigned char   *blob,
     PARAM_SET       *param,
     uint16_t        *F,
@@ -256,11 +265,18 @@ int unpack_secret_key(
 {
     param = get_param_set_by_id(blob[0]);
     string_to_tri (param->N, blob+1, F);
-    if (param->id==NTRU_CCA_443 || param->id == NTRU_CCA_743)
-    {
-        unpack_public_key (blob+1+param->packsk, param, h);
-    }
-    else
-        h = 0;
+    unpack_public_key (blob+1+param->packsk, param, h);
+
+    return 0;
+}
+
+int unpack_secret_key_KEM(
+    const unsigned char   *blob,
+    PARAM_SET       *param,
+    uint16_t        *F)
+{
+    param = get_param_set_by_id(blob[0]);
+    string_to_tri (param->N, blob+1, F);
+
     return 0;
 }

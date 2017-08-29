@@ -44,8 +44,8 @@ int crypto_encrypt_keypair(
     /* pack h into pk */
     pack_public_key(pk, param, h);
 
-    /* pack F into sk */
-    pack_secret_key(sk, param, F, h);
+    /* pack F,h into sk */
+    pack_secret_key_CCA(sk, param, F, h);
 
 
     free(mem);
@@ -63,38 +63,12 @@ int crypto_encrypt(
     const unsigned char *pk)
 {
     PARAM_SET   *param;
-    uint16_t    *buf, *mem, *h, *cpoly, *mpoly;
+    uint16_t    *buf, *mem, *h, *cpoly;
     param   = get_param_set_by_id(pk[0]);
 
-    *clen    =   (unsigned long long ) param->packpk;
+    *clen   =   (unsigned long long ) param->packpk;
 
-    if (param->id==NTRU_KEM_443 || param->id == NTRU_KEM_743)
-    {
-        mem     = malloc(sizeof(uint16_t)*param->padN*3);
-        buf     = malloc(sizeof(uint16_t)*param->padN*5);
-        h       = mem;
-        cpoly   = h     + param->padN;
-        mpoly   = cpoly + param->padN;
-
-        memset(mem,0, sizeof(uint16_t)*param->padN*3);
-        memset(buf,0, sizeof(uint16_t)*param->padN*5);
-
-        /* pad the message */
-        if (pad_msg( mpoly, (char*) m, mlen, param) == -1)
-            return -1;
-
-        unpack_public_key( pk,param, h);
-
-        encrypt_kem(mpoly, h, cpoly, buf, param);
-
-        pack_public_key (c, param, cpoly);
-
-        memset(mem,0, sizeof(uint16_t)*param->padN*3);
-        memset(buf,0, sizeof(uint16_t)*param->padN*5);
-        free(mem);
-        free(buf);
-    }
-    else if (param->id==NTRU_CCA_443 || param->id == NTRU_CCA_743)
+    if (param->id==NTRU_CCA_443 || param->id == NTRU_CCA_743)
     {
         mem     = malloc(sizeof(uint16_t)*param->padN*2);
         buf     = malloc(sizeof(uint16_t)*param->padN*6);
@@ -132,33 +106,9 @@ int crypto_encrypt_open(
     PARAM_SET   *param;
     uint16_t    *buf, *mem, *F, *cpoly, *mpoly, *h;
     param   =   get_param_set_by_id(c[0]);
-    h       =   0;
-    if ( param->id==NTRU_KEM_443 || param->id == NTRU_KEM_743)
+
+    if (param->id==NTRU_CCA_443 || param->id == NTRU_CCA_743)
     {
-        mem     = malloc(sizeof(uint16_t)*param->padN*3);
-        buf     = malloc(sizeof(uint16_t)*param->padN*4);
-        F       = mem;
-        cpoly   = F     + param->padN;
-        mpoly   = cpoly + param->padN;
-        memset(mem,0, sizeof(uint16_t)*param->padN*3);
-        memset(buf,0, sizeof(uint16_t)*param->padN*4);
-
-        unpack_public_key (c, param, cpoly);
-
-        unpack_secret_key (sk, param, F, h);
-
-        decrypt_kem(mpoly, F, cpoly, buf, param);
-
-        *mlen = recover_msg((char*)m, mpoly, param);
-
-        memset(mem,0, sizeof(uint16_t)*param->padN*3);
-        memset(buf,0, sizeof(uint16_t)*param->padN*4);
-        free(mem);
-        free(buf);
-    }
-    else if (param->id==NTRU_CCA_443 || param->id == NTRU_CCA_743)
-    {
-        uint16_t    *h;
         mem     = malloc(sizeof(uint16_t)*param->padN*4);
         buf     = malloc(sizeof(uint16_t)*param->padN*7);
         F       = mem;
@@ -170,7 +120,7 @@ int crypto_encrypt_open(
 
         unpack_public_key (c, param, cpoly);
 
-        unpack_secret_key (sk, param, F, h);
+        unpack_secret_key_CCA (sk, param, F, h);
 
         *mlen = decrypt_cca((char*) m,  F, h, cpoly,  buf, param);
     }

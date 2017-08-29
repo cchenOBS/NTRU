@@ -181,7 +181,7 @@ int test_cca (PARAM_SET *param)
 
     msg_len = 0;
     memset(buf, 0, sizeof(uint16_t)*param->padN * 7);
-    msg_len = decrypt_cca(msg_rec,  F, h,c,  buf, param);
+    msg_len = decrypt_cca(msg_rec,  F, h, c,  buf, param);
     printf("string of %d chars: %s\n", (int)msg_len, msg_rec);
 
 
@@ -192,13 +192,13 @@ int test_cca (PARAM_SET *param)
     return EXIT_SUCCESS;
 }
 
-int test_nist()
+int test_nist_cca()
 {
 
     printf("===============================\n");
     printf("===============================\n");
     printf("===============================\n");
-    printf("testing NIST API\n");
+    printf("testing NIST CCA API\n");
 
     int     i;
     unsigned char       *msg, *m, *c;
@@ -235,10 +235,61 @@ int test_nist()
     msg_len = 0;
     crypto_encrypt_open(m, &msg_len, c, c_len, sk);
 
-    printf("recovered message with length %d: ", (int)msg_len );
-/*    for (i=0;i<msg_len;i++)
-        printf("%c", m[i]);
-    printf("\n");*/
+    printf("recovered message with length %d: %s\n", (int)msg_len, m );
+
+    puts("!!!Hello OnBoard Security!!!");
+    return 0;
+}
+
+
+int test_nist_kem()
+{
+
+    printf("===============================\n");
+    printf("===============================\n");
+    printf("===============================\n");
+    printf("testing NIST KEM API\n");
+
+    int     i;
+    unsigned char       *m, *c, *mr;
+    unsigned char       *pk, *sk;
+
+
+    pk  = malloc(sizeof(unsigned char)* 4000);
+    sk  = malloc(sizeof(unsigned char)* 4000);
+    m   = malloc(sizeof(unsigned char)* 4000);
+    c   = malloc(sizeof(unsigned char)* 4000);
+    mr  = malloc(sizeof(unsigned char)* 4000);
+
+    printf("Let's try to encrypt a message:\n");
+    for(i=0;i< CRYPTO_BYTES; i++)
+    {
+        m[i] = rand();
+        printf("%d, ", m[i]);
+    }
+    printf("\n");
+
+
+    crypto_kem_keygenerate(pk, sk);
+    printf("key generated, public key:\n");
+
+    for (i=0;i<CRYPTO_PUBLICKEYBYTES;i++)
+        printf("%d, ", (int)pk[i]);
+    printf("\n");
+
+    crypto_kem_encapsulate(c, m, pk);
+    printf("encryption complete, ciphtertext:\n");
+    for (i=0;i<1022;i++)
+        printf("%d, ", (int)c[i]);
+    printf("\n");
+
+    crypto_kem_decapsulate(mr, c, sk);
+
+    printf("recovered message: \n" );
+    for(i=0;i< CRYPTO_BYTES; i++)
+        printf("%d, ", mr[i]);
+    printf("\n");
+
     puts("!!!Hello OnBoard Security!!!");
     return 0;
 }
@@ -260,7 +311,11 @@ int main(void)
     param   = get_param_set_by_id(NTRU_CCA_743);
     test_cca(param);
 
-    test_nist();
+
+    if (TEST_PARAM_SET == NTRU_CCA_443 || TEST_PARAM_SET == NTRU_CCA_743)
+        test_nist_cca();
+    else
+        test_nist_kem();
 
 }
 
