@@ -209,6 +209,29 @@ string_to_tri(
     return;
 }
 
+int pack_public_key(
+    unsigned char   *blob,
+    const PARAM_SET *param,
+    const uint16_t  *h)
+
+{
+    blob[0] = (char) param->id;
+    ntru_elements_2_octets(param->N, h, param->q_bits, blob+1);
+
+    return 0;
+}
+
+int unpack_public_key(
+    const unsigned char   *blob,
+    PARAM_SET *param,
+    uint16_t  *h)
+{
+    param = get_param_set_by_id(blob[0]);
+    ntru_octets_2_elements (param->packpk, blob+1, param->q_bits, h);
+    return 0;
+}
+
+
 int pack_secret_key(
     unsigned char   *blob,
     const PARAM_SET *param,
@@ -239,26 +262,5 @@ int unpack_secret_key(
     }
     else
         h = 0;
-    return 0;
-}
-int pack_public_key(
-    unsigned char   *blob,
-    const PARAM_SET *param,
-    const uint16_t  *h)
-
-{
-    blob[0] = (char) param->id;
-    ntru_elements_2_octets(param->N, h, param->q_bits, blob+1);
-
-    return 0;
-}
-
-int unpack_public_key(
-    const unsigned char   *blob,
-    PARAM_SET *param,
-    uint16_t  *h)
-{
-    param = get_param_set_by_id(blob[0]);
-    ntru_octets_2_elements (param->packpk, blob+1, param->q_bits, h);
     return 0;
 }

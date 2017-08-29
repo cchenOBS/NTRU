@@ -8,10 +8,42 @@
 #ifndef API_H_
 #define API_H_
 
-#define CRYPTO_SECRETKEYBYTES 256   /* secret key length */
-#define CRYPTO_PUBLICKEYBYTES 85    /* public key length */
-#define CRYPTO_BYTES 32             /* padding ? */
-#define CRYPTO_RANDOMBYTES 32       /* random input */
+#define TEST_NTRU_CCA_743
+
+
+#ifdef TEST_NTRU_CCA_443
+    #define TEST_PARAM_SET  NTRU_CCA_443
+    #define CRYPTO_SECRETKEYBYTES 722   /* secret key length */
+    #define CRYPTO_PUBLICKEYBYTES 610   /* public key length */
+    #define CRYPTO_BYTES 32             /* padding ? */
+    #define CRYPTO_RANDOMBYTES 32       /* random input */
+#endif
+
+#ifdef TEST_NTRU_CCA_743
+    #define TEST_PARAM_SET  NTRU_CCA_743
+    #define CRYPTO_SECRETKEYBYTES 1209  /* secret key length */
+    #define CRYPTO_PUBLICKEYBYTES 1022  /* public key length */
+    #define CRYPTO_BYTES 32             /* padding ? */
+    #define CRYPTO_RANDOMBYTES 32       /* random input */
+#endif
+
+#ifdef TEST_NTRU_KEM_443
+    #define TEST_PARAM_SET  NTRU_KEM_443
+    #define CRYPTO_SECRETKEYBYTES 111   /* secret key length */
+    #define CRYPTO_PUBLICKEYBYTES 610   /* public key length */
+    #define CRYPTO_BYTES 32             /* padding ? */
+    #define CRYPTO_CIPHERTEXTBYTES 610
+    #define CRYPTO_RANDOMBYTES 32       /* random input */
+#endif
+
+#ifdef TEST_NTRU_KEM_743
+    #define TEST_PARAM_SET  NTRU_KEM_743
+    #define CRYPTO_SECRETKEYBYTES 186   /* secret key length */
+    #define CRYPTO_PUBLICKEYBYTES 1022  /* public key length */
+    #define CRYPTO_BYTES 32             /* padding ? */
+    #define CRYPTO_CIPHERTEXTBYTES 1022
+    #define CRYPTO_RANDOMBYTES 32       /* random input */
+#endif
 
 /* ebacs API: key gen */
 int crypto_encrypt_keypair(

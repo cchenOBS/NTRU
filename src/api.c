@@ -12,7 +12,7 @@
 #include "NTRUEncrypt.h"
 #include "packing.h"
 
-#define TEST_PARAM_SET  NTRU_CCA_443
+
 
 
 
@@ -46,7 +46,6 @@ int crypto_encrypt_keypair(
 
     /* pack F into sk */
     pack_secret_key(sk, param, F, h);
-
 
 
     free(mem);
@@ -173,7 +172,7 @@ int crypto_encrypt_open(
 
         unpack_secret_key (sk, param, F, h);
 
-        *mlen = decrypt_cca(m,  F, h, cpoly,  buf, param);
+        *mlen = decrypt_cca((char*) m,  F, h, cpoly,  buf, param);
     }
     else
     {
