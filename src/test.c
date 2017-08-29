@@ -13,6 +13,7 @@
 #include <string.h>
 #include "param.h"
 #include "NTRUEncrypt.h"
+#include "api.h"
 
 
 int get_len(char *c)
@@ -25,7 +26,7 @@ int get_len(char *c)
 
 int test_kem(PARAM_SET *param) {
 
-    uint16_t    *f, *g, *h, *buf, *m, *c, *mem;
+    uint16_t    *F, *g, *h, *buf, *m, *c, *mem;
     uint16_t    i;
 
     printf("===============================\n");
@@ -33,7 +34,7 @@ int test_kem(PARAM_SET *param) {
     printf("===============================\n");
 
     mem     = malloc (sizeof(uint16_t)*param->padN * 5);
-    buf     = malloc (sizeof(uint16_t)*param->padN * 5);
+    buf     = malloc (sizeof(uint16_t)*param->padN * 6);
     if (!mem || !buf )
     {
         printf("malloc error!\n");
@@ -42,8 +43,8 @@ int test_kem(PARAM_SET *param) {
 
     memset(buf, 0, sizeof(uint16_t)*param->padN * 5);
 
-    f       = mem;
-    g       = f     + param->padN;
+    F       = mem;
+    g       = F     + param->padN;
     h       = g     + param->padN;
     m       = h     + param->padN;
     c       = m     + param->padN;
@@ -51,12 +52,12 @@ int test_kem(PARAM_SET *param) {
     printf("start key gen\n");
 
 
-    keygen(f,g,h,buf,param);
+    keygen(F,g,h,buf,param);
 
     printf("f:\n");
     for (i=0;i<param->padN;i++)
     {
-        printf("%2lld, ",(long long) f[i]);
+        printf("%2lld, ",(long long) F[i]);
     }
     printf("\ng:\n");
 
@@ -72,7 +73,7 @@ int test_kem(PARAM_SET *param) {
     }
     printf("\nfinished key gen\n");
 
-    check_keys(f,g,h,buf,param);
+    check_keys(F,g,h,buf,param);
     printf("\n");
 
     trinary_poly_gen(m, param->N, param->d);
@@ -101,7 +102,7 @@ int test_kem(PARAM_SET *param) {
 
 
     memset(buf, 0, sizeof(uint16_t)*param->padN * 5);
-    decrypt_kem(m, f, c, buf, param);
+    decrypt_kem(m, F, c, buf, param);
 
 
 
@@ -122,7 +123,7 @@ int test_kem(PARAM_SET *param) {
 int test_cca (PARAM_SET *param)
 {
 
-    uint16_t    *f, *g, *h, *buf, *c, *mem;
+    uint16_t    *F, *g, *h, *buf, *c, *mem;
     char        *msg, *msg_rec;
     size_t      msg_len;
 
@@ -135,7 +136,7 @@ int test_cca (PARAM_SET *param)
     msg_len = get_len(msg);
     msg_rec = malloc (sizeof(char)*param->max_msg_len);
     mem     = malloc (sizeof(uint16_t)*param->padN * 4);
-    buf     = malloc (sizeof(uint16_t)*param->padN * 7);
+    buf     = malloc (sizeof(uint16_t)*param->padN * 8);
     if (!mem || !buf || !msg_rec)
     {
         printf("malloc error!\n");
@@ -143,17 +144,17 @@ int test_cca (PARAM_SET *param)
     }
 
     memset(buf, 0, sizeof(uint16_t)*param->padN * 7);
-    f       = mem;
-    g       = f     + param->padN;
+    F       = mem;
+    g       = F     + param->padN;
     h       = g     + param->padN;
     c       = h     + param->padN;
 
-    keygen(f,g,h,buf,param);
+    keygen(F,g,h,buf,param);
 
     printf("f:\n");
     for (i=0;i<param->padN;i++)
     {
-        printf("%2lld, ",(long long) f[i]);
+        printf("%2lld, ",(long long) F[i]);
     }
     printf("\ng:\n");
 
@@ -171,7 +172,7 @@ int test_cca (PARAM_SET *param)
 
 
     memset(buf, 0, sizeof(uint16_t)*param->padN * 7);
-    check_keys(f,g,h,buf,param);
+    check_keys(F,g,h,buf,param);
 
 
     memset(buf, 0, sizeof(uint16_t)*param->padN * 7);
@@ -180,7 +181,7 @@ int test_cca (PARAM_SET *param)
 
     msg_len = 0;
     memset(buf, 0, sizeof(uint16_t)*param->padN * 7);
-    msg_len = decrypt_cca(msg_rec,  f, h,c,  buf, param);
+    msg_len = decrypt_cca(msg_rec,  F, h,c,  buf, param);
     printf("string of %d chars: %s\n", (int)msg_len, msg_rec);
 
 
@@ -191,11 +192,62 @@ int test_cca (PARAM_SET *param)
     return EXIT_SUCCESS;
 }
 
+int test_nist()
+{
+
+    printf("===============================\n");
+    printf("===============================\n");
+    printf("===============================\n");
+    printf("testing NIST API\n");
+
+    int     i;
+    unsigned char       *msg, *m, *c;
+    unsigned long long  msg_len, c_len;
+    msg     = (unsigned char*)"nist submission";
+    msg_len = get_len((char*)msg);
+
+
+    c_len   = 1;
+
+    unsigned char       *pk, *sk;
+
+    pk  = malloc(sizeof(unsigned char)* 4000);
+    sk  = malloc(sizeof(unsigned char)* 4000);
+    m   = malloc(sizeof(unsigned char)* 4000);
+    c   = malloc(sizeof(unsigned char)* 4000);
+
+    printf("Let's try to encrypt a message: %s\n", msg);
+
+    crypto_encrypt_keypair(pk, sk);
+    printf("key generated, public key:\n");
+
+    for (i=0;i<1022;i++)
+        printf("%d, ", (int)pk[i]);
+    printf("\n");
+
+    crypto_encrypt(c, &c_len,  msg, msg_len, pk);
+    printf("encryption complete, ciphtertext of length %d:\n", (int) c_len);
+    for (i=0;i<c_len;i++)
+        printf("%d, ", (int)c[i]);
+    printf("\n");
+
+
+    msg_len = 0;
+    crypto_encrypt_open(m, &msg_len, c, c_len, sk);
+
+    printf("recovered message with length %d: ", (int)msg_len );
+/*    for (i=0;i<msg_len;i++)
+        printf("%c", m[i]);
+    printf("\n");*/
+    puts("!!!Hello OnBoard Security!!!");
+    return 0;
+}
+
 
 int main(void)
 {
-    PARAM_SET *param;
 
+    PARAM_SET *param;
     param   = get_param_set_by_id(NTRU_KEM_443);
     test_kem(param);
 
@@ -207,5 +259,8 @@ int main(void)
 
     param   = get_param_set_by_id(NTRU_CCA_743);
     test_cca(param);
+
+    test_nist();
+
 }
 

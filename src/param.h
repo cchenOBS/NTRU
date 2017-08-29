@@ -29,6 +29,8 @@ struct _NTRU_PARAM_SET {
   uint8_t          N_bits;      /* ceil(log2(N)) */
   uint8_t          q_bits;      /* ceil(log2(q)) */
   const uint64_t   N;           /* ring degree */
+  uint16_t         packpk;       /* length of packed pk */
+  uint16_t         packsk;       /* length of packed sk */
   int8_t           p;           /* message space prime */
   int64_t          q;           /* ring modulus */
   const uint64_t   d;           /* df, dg, dr */

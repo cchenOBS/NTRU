@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 #include "../param.h"
-
+#include "stddef.h"
 /* generate a random binary polynomial with degree less than N */
 void
 binary_poly_gen(

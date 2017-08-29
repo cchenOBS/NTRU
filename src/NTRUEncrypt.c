@@ -15,30 +15,31 @@
 
 
 /*
- * memory requirement: 4 ring elements
+ * memory requirement: 6 ring elements
  */
 void
 keygen(
-          uint16_t  *f,     /* output secret key f */
+          uint16_t  *F,     /* output secret key f */
           uint16_t  *g,     /* optional output secret key g */
           uint16_t  *h,     /* output public key h */
           uint16_t  *buf,
     const PARAM_SET *param)
 {
     int16_t     i;
+    uint16_t    *f;
     uint16_t    *f_inv;
     uint16_t    *localbuf;
 
-
-    f_inv       = buf;
+    f           = buf;
+    f_inv       = f     + param->padN;
     /* three ring elements for karatsuba */
     localbuf    = f_inv + param->padN;
 
     do{
         /* generate f = pF+1 until f is invertible mod 2*/
-        trinary_poly_gen(f, param->N, param->d);
+        trinary_poly_gen(F, param->N, param->d);
         for (i=0;i<param->N;i++)
-            f[i] = param->p*f[i];
+            f[i] = param->p*F[i];
         f[0]++;
     }while (ntru_ring_inv(f, param->N, localbuf, f_inv) == -1);
 
@@ -58,26 +59,31 @@ keygen(
     /* compute h = f^-1*g */
     ntru_ring_mult_coefficients(f_inv, g, param, localbuf, h);
 
-    memset(buf, 0, sizeof(uint16_t)*param->padN*4);
+    memset(buf, 0, sizeof(uint16_t)*param->padN*6);
     return;
 }
 
 /*
- * memory requirement: 4 ring elements
+ * memory requirement: 5 ring elements
  */
 int check_keys(
-    const uint16_t  *f,
+    const uint16_t  *F,
     const uint16_t  *g,
     const uint16_t  *h,
           uint16_t  *buf,
     const PARAM_SET *param)
 {
     int16_t  i;
-    uint16_t *grec, *localbuf;
+    uint16_t *f, *grec, *localbuf;
 
-    memset(buf, 0, sizeof(uint16_t)*param->padN*4);
-    grec        = buf;
-    localbuf    = grec +   param->padN;
+    memset(buf, 0, sizeof(uint16_t)*param->padN*5);
+    f           = buf;
+    grec        = f     +   param->padN;
+    localbuf    = grec  +   param->padN;
+
+    for (i=0;i<param->N;i++)
+        f[i] = F[i]*param->p;
+    f[0]++;
     ntru_ring_mult_coefficients(f, h, param, localbuf, grec);
 
     for(i=0;i<param->N;i++)
@@ -89,7 +95,7 @@ int check_keys(
         }
     }
 
-    memset(buf, 0, sizeof(uint16_t)*param->padN*4);
+    memset(buf, 0, sizeof(uint16_t)*param->padN*5);
     return 0;
 }
 
@@ -143,7 +149,6 @@ int encrypt_kem(
     for (i=0;i<param->N;i++)
         c[i] = (t[i]*param->p + m[i]) & (param->q-1);
 
-
     memset(buf, 0, sizeof(uint16_t)*param->padN*5);
     return 0;
 }
@@ -175,22 +180,32 @@ lift_msg(
 
 
 /*
- * memory requirement: 3 ring elements
+ * memory requirement: 4 ring elements
  */
 int decrypt_kem(
-    uint16_t     *m,    /* output trinary message */
-    uint16_t     *f,    /* input public key */
-    uint16_t     *c,    /* input ciphertext */
-    uint16_t     *buf,
+    uint16_t    *m,    /* output trinary message */
+    uint16_t    *F,    /* input public key */
+    uint16_t    *c,    /* input ciphertext */
+    uint16_t    *buf,
     PARAM_SET   *param)
 {
+
+    uint16_t    *f, *localbuf, i;
+
+    f           = buf;
+    localbuf    = f + param->padN;
+
+    for (i=0;i<param->N;i++)
+        f[i] = F[i]*param->p;
+    f[0]++;
+
     /* compute e = c * f */
-    ntru_ring_mult_coefficients(c, f, param, buf, m);
+    ntru_ring_mult_coefficients(c, f, param, localbuf, m);
 
     /* recover m = e mod p */
     lift_msg(m, param);
 
-    memset(buf, 0, sizeof(uint16_t)*param->padN*3);
+    memset(buf, 0, sizeof(uint16_t)*param->padN*4);
     return 0;
 }
 
@@ -201,7 +216,7 @@ int decrypt_kem(
  * then convert the message into a binary polynomial and
  * pad the message with a random binary string p
  */
-static int
+int
 pad_msg(
           uint16_t  *m,     /* output message */
     const char      *msg,   /* input message string */
@@ -240,7 +255,7 @@ pad_msg(
  * converting a binary polynomial into a char string
  * return the length of the message string
  */
-static int
+int
 recover_msg(
           char      *msg,   /* output message string */
     const uint16_t  *m,     /* input binary message */
@@ -448,22 +463,29 @@ encrypt_cca(
  */
 int decrypt_cca(
           char      *msg,  /* output message: a string of chars */
-    const uint16_t  *f,    /* input public key */
+    const uint16_t  *F,    /* input public key */
     const uint16_t  *h,    /* input public key */
     const uint16_t  *c,    /* input ciphertext */
           uint16_t  *buf,
     const PARAM_SET *param)
 {
     uint16_t i, msg_len;
-    uint16_t *m, *t, *r, *t_rec, *localbuf;
+    uint16_t *f, *m, *t, *r, *t_rec, *localbuf;
 
-    memset(buf, 0, sizeof(int16_t)*param->padN*7);
+    memset(buf, 0, sizeof(int16_t)*param->padN*8);
 
-    m           = buf;
+    f           = buf;
+    m           = f     + param->padN;
     t           = m     + param->padN;
     r           = t     + param->padN;
     t_rec       = r     + param->padN;
     localbuf    = t_rec + param->padN;
+
+
+    for (i=0;i<param->N;i++)
+        f[i] = F[i]*param->p;
+    f[0]++;
+
 
     /* compute e = c * f */
     ntru_ring_mult_coefficients(c, f, param, localbuf, m);
@@ -514,14 +536,14 @@ int decrypt_cca(
                 printf("%d, ", c[i]);
             printf("\n");
 
-            memset(buf,0, sizeof(uint16_t)*param->padN*7);
+            memset(buf,0, sizeof(uint16_t)*param->padN*8);
             return -1;
         }
     }
 
     /* convert the message polynomial into char string */
     msg_len = recover_msg(msg, m, param);
-    memset(buf,0, sizeof(uint16_t)*param->padN*7);
+    memset(buf,0, sizeof(uint16_t)*param->padN*8);
     return msg_len;
 }
 

@@ -5,16 +5,22 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../src/NTRUEncrypt.c \
+../src/api.c \
+../src/packing.c \
 ../src/param.c \
 ../src/test.c 
 
 OBJS += \
 ./src/NTRUEncrypt.o \
+./src/api.o \
+./src/packing.o \
 ./src/param.o \
 ./src/test.o 
 
 C_DEPS += \
 ./src/NTRUEncrypt.d \
+./src/api.d \
+./src/packing.d \
 ./src/param.d \
 ./src/test.d 
 
@@ -23,7 +29,7 @@ C_DEPS += \
 src/%.o: ../src/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: Cross GCC Compiler'
-	gcc -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	gcc -I/usr/include -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

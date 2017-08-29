@@ -13,7 +13,7 @@
 
 
 /*
- * memory requirement: 4 ring elements
+ * memory requirement: 5 ring elements
  */
 void
 keygen(
@@ -51,6 +51,28 @@ void decrypt_kem(
     uint16_t    *buf,
     PARAM_SET   *param);
 
+
+/*
+ * check if a message length is valid for ntruencrypt-cca
+ * then convert the message into a binary polynomial and
+ * pad the message with a random binary string p
+ */
+int
+pad_msg(
+          uint16_t  *m,     /* output message */
+    const char      *msg,   /* input message string */
+    const size_t    msg_len,/* input length of the message */
+    const PARAM_SET *param);
+
+/*
+ * converting a binary polynomial into a char string
+ * return the length of the message string
+ */
+int
+recover_msg(
+          char      *msg,   /* output message string */
+    const uint16_t  *m,     /* input binary message */
+    const PARAM_SET *param);
 
 /*
  * CCA-2 secure encryption algorithm using NAEP
