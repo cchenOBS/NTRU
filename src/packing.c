@@ -10,6 +10,9 @@
 #include <string.h>
 #include "param.h"
 
+
+
+
 /* ntru_elements_2_octets
  *
  * Packs an array of n-bit elements into an array of
@@ -131,9 +134,10 @@ ntru_octets_2_elements(
 
 /*
  * trinary polynomial to char string
+ * pack 1 coefficients into 2 bits
  */
-static void
-tri_to_string(
+void
+tri_to_string_old(
     const uint16_t  in_len,     /*  in - degree of trinary poly */
     const uint16_t  *in,        /*  in - ptr to poly */
     unsigned char   *out)       /* out - addr for output string */
@@ -167,12 +171,64 @@ tri_to_string(
 }
 
 
+/*
+ * trinary polynomial to char string
+ * pack 5 coefficients into 8 bits
+ */
+static void
+tri_to_string(
+    const uint16_t  in_len,     /*  in - degree of trinary poly */
+    const uint16_t  *in,        /*  in - ptr to poly */
+    unsigned char   *out)       /* out - addr for output string */
+{
+    unsigned char tmp1, tmp2;
+    int i,j;
+    int padNover5;
+
+    padNover5 = in_len/5;
+    if(in_len%5==0)
+        padNover5--;
+    for (i=0;i<padNover5;i++)
+    {
+        tmp1 = 0;
+        for (j=0;j<5;j++)
+        {
+            tmp2 = (in[i*5+j]&0b11);
+            if (tmp2==0b11)
+                tmp2 = 2;
+            tmp1 += tmp2;
+            if (j!=4)
+                tmp1 *= 3;
+        }
+        out[i] = tmp1;
+    }
+    tmp1 = 0;
+    for (i=0;i<5;i++)
+    {
+        if (padNover5*5+i > in_len && i!=4)
+            tmp1 *= 3;
+        else
+        {
+            tmp2 = (in[padNover5*5+i]&0b11);
+            if (tmp2==0b11)
+                tmp2 = 2;
+            tmp1 += tmp2;
+            if (i!=4)
+                tmp1 *= 3;
+        }
+    }
+    out[padNover5] = tmp1;
+
+    return;
+}
+
 
 /*
  * trinary polynomial to char string
+ * unpack 1 coefficients from 2 bits
  */
-static void
-string_to_tri(
+void
+string_to_tri_old(
     const uint16_t  in_len,/*  in - degree of trinary poly */
     const unsigned char  *in,        /*  in - ptr to string */
     uint16_t        *out)       /* out - addr for trinary poly */
@@ -208,6 +264,54 @@ string_to_tri(
     }
     return;
 }
+
+
+/*
+ * trinary polynomial to char string
+ * unpack 5 coefficients from 8 bits
+ */
+static void
+string_to_tri(
+    const uint16_t  in_len,     /*  in - degree of trinary poly */
+    const unsigned char  *in,   /*  in - ptr to string */
+    uint16_t        *out)       /* out - addr for trinary poly */
+{
+    unsigned char tmp;
+    int i,j;
+    int padNover5;
+
+    padNover5 = in_len/5;
+    if(in_len%5==0)
+        padNover5--;
+
+    for(i=0;i<padNover5;i++)
+    {
+        tmp = in[i];
+        for (j=4;j>=0;j--)
+        {
+            out[i*5+j] = tmp%3;
+            if (out[i*5+j]== 2)
+                out[i*5+j] = -1;
+            tmp /= 3;
+        }
+    }
+    tmp = in [padNover5];
+
+    for (i=4;i>=0;i--)
+    {
+        if (padNover5*5+i<in_len)
+        {
+            out[padNover5*5+i] = tmp%3;
+            if (out[padNover5*5+i]== 2)
+                out[padNover5*5+i] = -1;
+        }
+        tmp /= 3;
+    }
+
+
+    return;
+}
+
 
 int pack_public_key(
     unsigned char   *blob,

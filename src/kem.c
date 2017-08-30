@@ -38,10 +38,15 @@ int crypto_kem_keygenerate(
 
     /* pack h into pk */
     pack_public_key(pk, param, h);
+    int i;
+    for (i=0;i<param->packsk;i++)
+        sk[i] =0;
 
     /* pack F into sk */
     pack_secret_key_KEM(sk, param, F);
 
+    memset(mem,0, sizeof(uint16_t)*param->padN*3);
+    memset(buf,0, sizeof(uint16_t)*param->padN*6);
 
     free(mem);
     free(buf);
@@ -75,7 +80,7 @@ int crypto_kem_encapsulate(
         if (pad_msg( mpoly, (char*) ss, CRYPTO_BYTES, param) == -1)
             return -1;
 
-        unpack_public_key( pk,param, h);
+        unpack_public_key(pk,param, h);
 
         encrypt_kem(mpoly, h, cpoly, buf, param);
 

@@ -66,7 +66,7 @@ int crypto_encrypt(
     uint16_t    *buf, *mem, *h, *cpoly;
     param   = get_param_set_by_id(pk[0]);
 
-    *clen   =   (unsigned long long ) param->packpk;
+    *clen   = (unsigned long long ) param->packpk;
 
     if (param->id==NTRU_CCA_443 || param->id == NTRU_CCA_743)
     {
@@ -75,7 +75,7 @@ int crypto_encrypt(
         h       = mem;
         cpoly   = h     + param->padN;
 
-        unpack_public_key( pk,param, h);
+        unpack_public_key(pk,param, h);
 
         encrypt_cca(cpoly, (char*) m, mlen, h,  buf, param);
 
