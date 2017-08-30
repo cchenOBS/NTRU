@@ -18,7 +18,7 @@ static PARAM_SET ParamSets[] = {
         11,                   /* bitlength of q */
         443,                 /* ring degree */
         610,                /* length of packed pk */
-        111,                /* length of packed sk */
+        89,                 /* length of packed sk */
         3,                    /* message space prime */
         2048,                 /* ring modulus, 2^30+2^13+1 */
         115,                  /* standard deviation, ~ 2^10.5 */
@@ -33,7 +33,7 @@ static PARAM_SET ParamSets[] = {
         11,                   /* bitlength of q */
         743,                 /* ring degree */
         1022,                /* length of packed pk */
-        186,                /* length of packed sk */
+        149,                /* length of packed sk */
         3,                    /* message space prime */
         2048,                 /* ring modulus, 2^30+2^13+1 */
         247,                  /* standard deviation, ~ 2^10.5 */
@@ -48,7 +48,7 @@ static PARAM_SET ParamSets[] = {
         11,                   /* bitlength of q */
         443,                 /* ring degree */
         610,                /* length of packed pk */
-        111,                /* length of packed sk */
+        89,                /* length of packed sk */
         3,                    /* message space prime */
         2048,                 /* ring modulus, 2^30+2^13+1 */
         115,                  /* standard deviation, ~ 2^10.5 */
@@ -64,7 +64,7 @@ static PARAM_SET ParamSets[] = {
         11,                   /* bitlength of q */
         743,                 /* ring degree */
         1022,                /* length of packed pk */
-        186,                /* length of packed sk */
+        149,                /* length of packed sk */
         3,                    /* message space prime */
         2048,                 /* ring modulus, 2^30+2^13+1 */
         115,                  /* standard deviation, ~ 2^10.5 */

@@ -99,7 +99,7 @@ int check_keys(
     return 0;
 }
 
-static int
+int
 check_m (
     const uint16_t *m,
     const uint16_t N)
@@ -291,7 +291,7 @@ recover_msg(
  * generate a balanced trinary r from msg and h
  * memory requirement: 2 * LENGTH_OF_HASH
  */
-static int
+int
 generate_r(
           uint16_t  *r,     /* output r */
     const uint16_t  *msg,   /* input binary message */
@@ -330,7 +330,7 @@ generate_r(
  * input a message msg, output msg \trixor hash(rh)
  * memory requirements: LENGTH_OF_HASH + 1 ring element
  */
-static int
+int
 mask_m(
           uint16_t  *msg,   /* in/output binary message */
     const uint16_t  *rh,

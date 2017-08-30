@@ -15,8 +15,11 @@
 #include "NTRUEncrypt.h"
 #include "api.h"
 
+unsigned char   rndness[32] = "source of randomness";
+unsigned char   msg[32]     = "nist submission";
 
-int get_len(char *c)
+
+int get_len(unsigned char *c)
 {
     int len = 0;
     while(c[len]!='\0')
@@ -124,7 +127,7 @@ int test_cca (PARAM_SET *param)
 {
 
     uint16_t    *F, *g, *h, *buf, *c, *mem;
-    char        *msg, *msg_rec;
+    char        *msg_rec;
     size_t      msg_len;
 
     uint16_t    i;
@@ -132,7 +135,7 @@ int test_cca (PARAM_SET *param)
     printf("===============================\n");
     printf("===============================\n");
     printf("===============================\n");
-    msg     = "nist submission";
+
     msg_len = get_len(msg);
     msg_rec = malloc (sizeof(char)*param->max_msg_len);
     mem     = malloc (sizeof(uint16_t)*param->padN * 4);
@@ -176,7 +179,7 @@ int test_cca (PARAM_SET *param)
 
 
     memset(buf, 0, sizeof(uint16_t)*param->padN * 7);
-    encrypt_cca(c, msg, msg_len, h,  buf, param);
+    encrypt_cca(c, (char*) msg, msg_len, h,  buf, param);
 
 
     msg_len = 0;
@@ -184,7 +187,7 @@ int test_cca (PARAM_SET *param)
     msg_len = decrypt_cca(msg_rec,  F, h, c,  buf, param);
     printf("string of %d chars: %s\n", (int)msg_len, msg_rec);
 
-
+    free(msg_rec);
     free(mem);
     free(buf);
 
@@ -201,10 +204,10 @@ int test_nist_cca()
     printf("testing NIST CCA API\n");
 
     int     i;
-    unsigned char       *msg, *m, *c;
+    unsigned char       *m, *c;
     unsigned long long  msg_len, c_len;
-    msg     = (unsigned char*)"nist submission";
-    msg_len = get_len((char*)msg);
+
+    msg_len = get_len(msg);
 
 
     c_len   = 1;
@@ -238,6 +241,128 @@ int test_nist_cca()
     printf("recovered message with length %d: %s\n", (int)msg_len, m );
 
     puts("!!!Hello OnBoard Security!!!");
+
+    free(pk);
+    free(sk);
+    free(m);
+    free(c);
+
+    return 0;
+}
+
+
+int test_nist_cca_KAT()
+{
+
+    printf("===============================\n");
+    printf("===============================\n");
+    printf("===============================\n");
+    printf("testing NIST CCA API with KAT\n");
+
+    int     i;
+    unsigned char       *m, *c;
+    unsigned long long  msg_len, c_len;
+    unsigned char       *pk, *sk;
+
+
+
+    printf("For this KAT we use randomness: %s\n", rndness);
+    msg_len = get_len(msg);
+    printf("Let's try to encrypt a message of %d chars: %s\n", (int)msg_len, msg);
+
+    c_len   = 1;
+
+    pk  = malloc(sizeof(unsigned char)* 4000);
+    sk  = malloc(sizeof(unsigned char)* 4000);
+    m   = malloc(sizeof(unsigned char)* 4000);
+    c   = malloc(sizeof(unsigned char)* 4000);
+
+    crypto_encrypt_keypair_KAT(pk, sk, rndness);
+    printf("key generated, public key:\n");
+
+    for (i=0;i<1022;i++)
+        printf("%d, ", (int)pk[i]);
+    printf("\n");
+
+    crypto_encrypt_KAT(c, &c_len,  msg, msg_len, pk,rndness);
+    printf("encryption complete, ciphtertext of length %d:\n", (int) c_len);
+    for (i=0;i<c_len;i++)
+        printf("%d, ", (int)c[i]);
+    printf("\n");
+
+
+    msg_len = 0;
+    crypto_encrypt_open(m, &msg_len, c, c_len, sk);
+
+    printf("recovered message with length %d: %s\n", (int)msg_len, m );
+
+    free(pk);
+    free(sk);
+    free(m);
+    free(c);
+
+    puts("!!!Hello OnBoard Security!!!");
+    return 0;
+}
+
+
+int test_nist_kem_KAT()
+{
+
+    printf("===============================\n");
+    printf("===============================\n");
+    printf("===============================\n");
+    printf("testing NIST KEM API with KAT\n");
+
+    int     i;
+    unsigned char   *m, *c, *mr;
+    unsigned char   *pk, *sk;
+    unsigned char   rndness[32] = "this is the source of randomness";
+
+    printf("For this KAT we use randomness: %s\n", rndness);
+
+
+    pk  = malloc(sizeof(unsigned char)* 1500);
+    sk  = malloc(sizeof(unsigned char)* 1500);
+    m   = malloc(sizeof(unsigned char)* 1500);
+    c   = malloc(sizeof(unsigned char)* 1500);
+    mr  = malloc(sizeof(unsigned char)* 1500);
+
+
+    printf("Let's try to encrypt a message:\n");
+    for(i=0;i< CRYPTO_BYTES; i++)
+    {
+        m[i] = rand();
+        printf("%d, ", m[i]);
+    }
+    printf("\n");
+
+
+    crypto_kem_keygenerate_KAT(pk, sk, rndness);
+    printf("key generated, public key:\n");
+
+    for (i=0;i<CRYPTO_PUBLICKEYBYTES;i++)
+        printf("%d, ", (int)pk[i]);
+    printf("\n");
+
+    crypto_kem_encapsulate_KAT(c, m, pk,rndness);
+    printf("encryption complete, ciphtertext:\n");
+    for (i=0;i<1022;i++)
+        printf("%d, ", (int)c[i]);
+    printf("\n");
+
+    crypto_kem_decapsulate(mr, c, sk);
+
+    printf("recovered message: \n" );
+    for(i=0;i< CRYPTO_BYTES; i++)
+        printf("%d, ", mr[i]);
+    printf("\n");
+    free(pk);
+    free(sk);
+    free(m);
+    free(c);
+    free(mr);
+    puts("!!!Hello OnBoard Security!!!");
     return 0;
 }
 
@@ -255,11 +380,11 @@ int test_nist_kem()
     unsigned char       *pk, *sk;
 
 
-    pk  = malloc(sizeof(unsigned char)* 4000);
-    sk  = malloc(sizeof(unsigned char)* 4000);
-    m   = malloc(sizeof(unsigned char)* 4000);
-    c   = malloc(sizeof(unsigned char)* 4000);
-    mr  = malloc(sizeof(unsigned char)* 4000);
+    pk  = malloc(sizeof(unsigned char)* 1500);
+    sk  = malloc(sizeof(unsigned char)* 1500);
+    m   = malloc(sizeof(unsigned char)* 1500);
+    c   = malloc(sizeof(unsigned char)* 1500);
+    mr  = malloc(sizeof(unsigned char)* 1500);
 
     printf("Let's try to encrypt a message:\n");
     for(i=0;i< CRYPTO_BYTES; i++)
@@ -290,7 +415,14 @@ int test_nist_kem()
         printf("%d, ", mr[i]);
     printf("\n");
 
+
+    free(pk);
+    free(sk);
+    free(m);
+    free(c);
+    free(mr);
     puts("!!!Hello OnBoard Security!!!");
+
     return 0;
 }
 
@@ -316,6 +448,14 @@ int main(void)
         test_nist_cca();
     else
         test_nist_kem();
+
+
+    if (TEST_PARAM_SET == NTRU_CCA_443 || TEST_PARAM_SET == NTRU_CCA_743)
+        test_nist_cca_KAT();
+    else
+        test_nist_kem_KAT();
+
+
 
 }
 
